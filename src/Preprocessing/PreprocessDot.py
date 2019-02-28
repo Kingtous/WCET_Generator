@@ -14,7 +14,8 @@ def preprocess(Path):
     :return: Dot Data that suit networkx
     '''
     Input=open(Path,'r')
-    Output=open(Path+'tmp','w')
+    Output=open(Path+'_pd','w')
+    Output_Declaration = open(Path + '_dec', 'w')
     Definition=''
 
     #step1 生成对应label转换表,查找definition
@@ -50,8 +51,7 @@ def preprocess(Path):
             else:
                 continue
 
-        #step 3 子图中保留结点
-
+        #step 3 子图中保留结点，生成声明信息
         Input.seek(0)
         # flag -> True , put Definition
         Flag=False
@@ -68,8 +68,12 @@ def preprocess(Path):
                         label_name=label.group().split('=')[-1]
                         if label_name!='""':
                             Output.write(label_name+'\n')
+                            if Flag==True:
+                                Output_Declaration.write(label_name+'\n')
                         else:
                             Output.write(r.search(NodeReg_Head,line).group()+'\n')
+                            if Flag == True:
+                                Output_Declaration.write(r.search(NodeReg_Head,line).group()+'\n')
                     pass
                 else:
                     if line.startswith('subgraph'):
@@ -77,13 +81,26 @@ def preprocess(Path):
                         text=r.search(subgraphNameReg,line).group().strip('"')
                         line=r.sub(subgraphNameReg,'"cluster_'+text+'"',line)
                         Output.write(line+'\n'+'label='+text+'\nstyle="bold"\n')
+
+                        if Flag == True:
+                            Output_Declaration.write(line+'\n'+'label='+text+'\nstyle="bold"\n')
+                        if text.startswith('_thrFunc'):
+                            Output.write('\ncolor="blue"\n')
+                            if Flag ==True:
+                                Output_Declaration.write('color="blue"\n')
+
+
                     else:
                         Output.write(line+'\n')
+                        if Flag == True:
+                            Output_Declaration.write(line+'\n')
             else:
                 continue
+
     except:
         print('Preprocessing Error.')
         exit(-1)
     finally:
         Input.close()
         Output.close()
+        Output_Declaration.close()

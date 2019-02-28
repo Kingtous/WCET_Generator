@@ -3,7 +3,7 @@ from networkx.drawing.nx_pydot import write_dot
 import re
 
 #=========================
-from src.Preprocessing.PreprocessDot import preprocess
+from PreprocessDot import preprocess
 #=========================
 
 #设置工作目录
@@ -15,7 +15,9 @@ relationPath=root+'_thrFunc0_relation.txt'
 #=======需要处理的函数入口（暂时不用）======
 parseFunction='_thrFunc0_'
 #=======WCET目录====================
-wctPath=root+''
+wctPath=root+'knapsack.wct'
+#===========cluster_定义==========
+Definition=''
 #========输出================================
 #=======dot输出==========
 dotOutput=root+'thrFunc0_pro.dot'
@@ -23,13 +25,20 @@ dotOutput=root+'thrFunc0_pro.dot'
 Edges=0
 Nodes=0
 Call_TaskFunc=0
-ConditionBranch=0
+ConditionVertex=0
+AverageConditionBranch=0
 AverageWCET=0
 WCET_Varies=0
+Wait_Vertex=0
 #===========WCET Config=========
 Program_RUN=33
 WCET_Total=0
 #===============================
+
+
+def NodeWait(graph):
+    # 这里手动写...
+    pass
 
 def parseRelation(Path):
     '''
@@ -54,17 +63,29 @@ def changeShapeOfCondition(graph):
     :return: None （处理后的带有判断的CFG图）
     '''
     for node in nx.nodes(graph):
+
+        if 'CREATE' in graph.node[node]['label'] :
+            # 顺带计算 Task Creation (Call_TaskFunc)
+            global Call_TaskFunc
+            Call_TaskFunc=Call_TaskFunc+1
+            continue
+        elif 'taskwait' in graph.node[node]['label']:
+            global Wait_Vertex
+            Wait_Vertex=Wait_Vertex+1
+            continue
         count=0
         # 结点连接的结点
         neighbour=nx.neighbors(graph,node)
         for n in neighbour:
             #判断是否是task创建
-            if n.startswith('CREATE'):
+            if 'CREATE' in n:
                 continue
             else:
                 count=count+1
         if count>1:
             graph.node[node]['shape']='diamond'
+            global ConditionVertex
+            ConditionVertex=ConditionVertex+1
 
 def deleteTaskReturnNode(graph):
     '''
@@ -73,32 +94,92 @@ def deleteTaskReturnNode(graph):
     '''
     NodeNeedTobeDelete=[]
     for node in nx.nodes(graph):
-        if node.endswith('exit') and (node.startswith('_taskFunc') or node.startswith('_thrFunc')):
-            # return 结点
-            allNB=nx.all_neighbors(graph,node)
-            for returnNode in allNB:
-                #returnNode
-                nebrs=nx.all_neighbors(graph,returnNode)
-                for n in nebrs:
-                    #判断是否是_exit，不是的话加一条边
-                    if n!=node:
-                        graph.add_edge(n,node)
-                NodeNeedTobeDelete.append(returnNode)
-                break
+        if node.endswith('exit'):
+            if (node.startswith('_taskFunc') or node.startswith('_thrFunc')):
+                # return 结点
+                allNB=nx.all_neighbors(graph,node)
+                for returnNode in allNB:
+                    #returnNode
+                    nebrs=nx.all_neighbors(graph,returnNode)
+                    for n in nebrs:
+                        #判断是否是_exit，不是的话加一条边
+                        if n!=node:
+                            graph.add_edge(n,node)
+                    NodeNeedTobeDelete.append(returnNode)
+                    break
+            else:
+                # 加 return 标识
+                allNB = nx.all_neighbors(graph, node)
+                for returnNode in allNB:
+                    if graph.has_edge(returnNode,node):
+                        graph.node[returnNode]['label']=\
+                            graph.node[returnNode]['label']+'\nRETURN\n'
+
+
+
     # 删除returnNode
     for node in NodeNeedTobeDelete:
         graph.remove_node(node)
 
-def NodeWait(graph):
-    # 这里先手动写吧
-    graph.add_edge('_taskFunc0__exit','knapsack_par__bb45__2')
-    # # 从串行角度看
-    # for node in nx.nodes(graph):
-    #     if graph.node[node]['label'].endswith('taskwait'):
-    #         # 遇到taskwait结点
-    #
-    #         pass
-    pass
+        global Definition
+        Definition=Definition.replace('"'+node+'"', '')
+
+
+
+def AddWCETValue(graph):
+
+    WCET_Varies_Dict={}
+
+    global wctPath
+    text=''
+    file = open(wctPath, 'r')
+    try:
+        text=file.readlines()
+        # Add Label
+        for line in text:
+            line=line.strip()
+            if line!='':
+                line=line.split(' ')
+
+                statement=re.split(r'_+',line[1])
+                if len(statement) ==3:
+                    statement=statement[0]+'__'+statement[1]+'___'+statement[2]
+                elif len(statement) ==2:
+                    statement=statement[0]+'__'+statement[1]
+                else:
+                    statement=statement[0]
+                name=line[0]+'__'+statement
+                try:
+                    value=line[2]
+                    try:
+                        wctLine=str(int(value)-Program_RUN)
+                        WCET_Varies_Dict[wctLine]= WCET_Varies_Dict.get(wctLine,0)+1
+                    except:
+                        wctLine='ERROR'
+
+                    if graph.node[name] != None:
+                        # 加Nodes
+                        global Nodes,WCET_Total
+                        Nodes=Nodes+1
+                        if wctLine!='ERROR':
+                            WCET_Total=WCET_Total+int(wctLine)
+                        graph.node[name]['label']=\
+                        graph.node[name]['label']+'\n'+\
+                            'WCET='+wctLine
+
+                    global WCET_Varies,AverageWCET
+                    WCET_Varies=len(WCET_Varies_Dict)
+                    AverageWCET=WCET_Total/Nodes
+
+
+
+                except:
+                    continue
+
+    except:
+        print('WCET FILE ERROR')
+    finally:
+        file.close()
 
 
 def parrallel(graph):
@@ -108,7 +189,8 @@ def parrallel(graph):
     '''
     #改并行
     for node in nx.nodes(graph):
-        if graph.node[node]['label'].startswith('CREATE'):
+        name= graph.node[node]['label']
+        if 'CREATE' in name:
             for ne in nx.all_neighbors(graph,node):
                 if ne.endswith('exit'):
                     # task 并行
@@ -117,7 +199,7 @@ def parrallel(graph):
                     tmp=ne
                     nameToBeFind='CREATE '+ne.replace('_exit','')
                     for nodeName in nx.nodes(graph):
-                        if(graph.node[nodeName]['label']==nameToBeFind):
+                        if(graph.node[nodeName]['label'].split('\n')[-1]==nameToBeFind):
                             ne=nodeName
                             break
                     taiList=[]
@@ -125,11 +207,37 @@ def parrallel(graph):
                     for mother in nx.neighbors(graph,ne):
                         taiList.append(mother)
 
+                    edgeToBeAdd=[]
+                    edgeToBeDelete=[]
+
                     for mother in nx.all_neighbors(graph,ne):
                         if mother not in taiList:
-                            graph.add_edge(mother,node)
-                            graph.remove_edge(tmp,node)
+                            # graph.add_edge(mother,node)
+                            edgeToBeAdd.append(mother)
+                            # graph.remove_edge(tmp,node)
+                            edgeToBeDelete.append(node)
 
+                    for edge in edgeToBeAdd:
+                        graph.add_edge(edge, node)
+                    for edge in edgeToBeDelete:
+                        graph.remove_edge(tmp,edge)
+
+def deleteUndependNode(graph):
+    NodetoBeDelete=[]
+    nodeIter=nx.nodes(graph)
+    for node in nodeIter:
+        count=0
+        iter=nx.all_neighbors(graph,node)
+        for elem in iter:
+            count=count+1
+        if count==0:
+            NodetoBeDelete.append(node)
+    #删除结点
+    for node in NodetoBeDelete:
+        graph.remove_node(node)
+
+        global Definition
+        Definition=Definition.replace('"'+node+'"','')
 
 
 def parse(parseFunction,graph,relationDict):
@@ -148,16 +256,16 @@ def parse(parseFunction,graph,relationDict):
             if relationDict[callBlock]=='ort_taskwait':
                 graph.node[callBlock]['style'] = 'filled'
                 graph.node[callBlock]['color'] = 'green'
-            graph.node[callBlock]['label']='('+callBlock.split('__bb')[0]+')'+relationDict[callBlock][4:]
+            graph.node[callBlock]['label']=callBlock+'\n('+callBlock.split('__bb')[0]+')'+relationDict[callBlock][4:]
             continue
             #callBlockNode = nx.get_node_attributes(graph, callBlock)
         elif relationDict[callBlock].startswith('_taskFunc'):
             # task creation
-            graph.node[callBlock]['label'] = 'CREATE ' + relationDict[callBlock]
+            graph.node[callBlock]['label'] = callBlock+'\n'+'CREATE ' + relationDict[callBlock]
             graph.node[callBlock]['style'] = 'filled'
             graph.node[callBlock]['color'] = 'aquamarine'
         else:
-            graph.node[callBlock]['label'] = 'CALL ' + relationDict[callBlock]
+            graph.node[callBlock]['label'] = callBlock+'\n'+'CALL ' + relationDict[callBlock]
 
         Function_entry=relationDict[callBlock]+'_entry'
         Function_exit=relationDict[callBlock]+'_exit'
@@ -165,51 +273,76 @@ def parse(parseFunction,graph,relationDict):
 
         for nod in nx.neighbors(graph,callBlock):
             nextNode=nod
-        graph.add_edge(Function_exit,nextNode)
-        graph.add_edge(callBlock, Function_entry)
-        # 删去不必要的边
-        graph.remove_edge(callBlock,nextNode)
-    # 处理CFG
+        if not relationDict[callBlock].startswith('_taskFunc'):
+            graph.add_edge(Function_exit,nextNode,color='red')
+            # 改成蓝色
+
+            # 删去不必要的边
+            graph.remove_edge(callBlock, nextNode)
+        graph.add_edge(callBlock, Function_entry,color='blue')
+
+    # 处理 CFG
     deleteTaskReturnNode(graph)
     changeShapeOfCondition(graph)
     NodeWait(graph)
     parrallel(graph)
+    deleteUndependNode(graph)
+    AddWCETValue(graph)
     # 输出
     printFeatureOfGraph(graph)
 
 def printFeatureOfGraph(graph):
-    # 计算处理完后的结点
+    # 计算处理完后的结点,Nodes在生成WCET时数
     Edges = nx.number_of_edges(graph)
-    Nodes = nx.number_of_nodes(graph)
-    # 输出
-    print('Vertex:', Nodes)
-    print('Edges:', Edges)
-    print('Call_TaskFunc:', Call_TaskFunc)
-    print('Average WCET:', AverageWCET)
-    print('WCET_Varies:', WCET_Varies)
+    # 输出--Terminal
+    print('Vertex(|V|): ' + str(Nodes))
+    print('Edges(|E|): ' + str(Edges))
+    print('Call_TaskFunc(N_ce): ' + str(Call_TaskFunc))
+    print('Wait Vertex(N_we): ' + str(Wait_Vertex))
+    print('Condition Vertex(N_cd): ' + str(ConditionVertex))
+    print('AverageConditionalBranch(N_br): ' + str(AverageConditionBranch))
+    print('Average WCET(C): ' + str(AverageWCET))
+    print('WCET_Varies(e): ' + str(WCET_Varies))
+    # 输出--文件
+    file=open(root+'FeatureOfPCFG.txt','w')
+    try:
+        file.write('Vertex(|V|): '+str(Nodes))
+        file.write('\nEdges(|E|): '+str(Edges))
+        file.write('\nCall_TaskFunc(N_ce): '+str(Call_TaskFunc))
+        file.write('\nWait Vertex(N_we): '+str(Wait_Vertex))
+        file.write('\nCondition Vertex(N_cd): '+str(ConditionVertex))
+        file.write('\nAverageConditionalBranch(N_br): '+str(AverageConditionBranch))
+        file.write('\nAverage WCET(C): '+str(AverageWCET))
+        file.write('\nWCET_Varies(e): '+str(WCET_Varies))
+    except:
+        print('I/O Error.')
+    finally:
+        file.close()
 
 
+def pdfPrint(Path):
+    import os
+    os.system('dot -Tpdf '+Path+' -o '+os.path.dirname(Path)+'/FinalOutput.pdf')
 
 
 if __name__=='__main__':
     relation = parseRelation(relationPath)
+    # 预处理
     preprocess(dotPath)
-    graph = nx.nx_pydot.read_dot(dotPath+'tmp')#'Preprocessing/knapsack_ompi_trim.Preprocessing')
+    # 得到cluster定义
+    Definition=open(dotPath+'_dec').read()
+    # 调用networkx处理CFG
+    graph = nx.nx_pydot.read_dot(dotPath+'_pd')#'Preprocessing/knapsack_ompi_trim.Preprocessing')
     parse(parseFunction,graph,relation)
     write_dot(graph,dotOutput)
+    #加入定义
+    fileContext=open(dotOutput,'r').readlines()
+    FinalOutput=open(dotOutput+'_Final','w')
 
+    for line in fileContext[:-1]:
+        FinalOutput.write(line)
+    FinalOutput.write(Definition)
+    FinalOutput.close()
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    # 调用系统 graphviz生成最终的dot
+    pdfPrint(dotOutput+'_Final')
