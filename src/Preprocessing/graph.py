@@ -30,6 +30,9 @@ AverageConditionBranch=0
 AverageWCET=0
 WCET_Varies=0
 Wait_Vertex=0
+#========辅助计算数据
+TotalConditionBranch=0
+DEBUG=True
 #===========WCET Config=========
 Program_RUN=33
 WCET_Total=0
@@ -275,8 +278,6 @@ def parse(parseFunction,graph,relationDict):
             nextNode=nod
         if not relationDict[callBlock].startswith('_taskFunc'):
             graph.add_edge(Function_exit,nextNode,color='red')
-            # 改成蓝色
-
             # 删去不必要的边
             graph.remove_edge(callBlock, nextNode)
         graph.add_edge(callBlock, Function_entry,color='blue')
@@ -295,14 +296,19 @@ def printFeatureOfGraph(graph):
     # 计算处理完后的结点,Nodes在生成WCET时数
     Edges = nx.number_of_edges(graph)
     # 输出--Terminal
-    print('Vertex(|V|): ' + str(Nodes))
-    print('Edges(|E|): ' + str(Edges))
-    print('Call_TaskFunc(N_ce): ' + str(Call_TaskFunc))
-    print('Wait Vertex(N_we): ' + str(Wait_Vertex))
-    print('Condition Vertex(N_cd): ' + str(ConditionVertex))
-    print('AverageConditionalBranch(N_br): ' + str(AverageConditionBranch))
-    print('Average WCET(C): ' + str(AverageWCET))
-    print('WCET_Varies(e): ' + str(WCET_Varies))
+    if DEBUG:
+        print('========Debug Message Start=========')
+        print('Vertex(|V|): ' + str(Nodes))
+        print('Edges(|E|): ' + str(Edges))
+        print('Call_TaskFunc(N_ce): ' + str(Call_TaskFunc))
+        print('Wait Vertex(N_we): ' + str(Wait_Vertex))
+        print('Condition Vertex(N_cd): ' + str(ConditionVertex))
+        print('AverageConditionalBranch(N_br): ' + str(AverageConditionBranch))
+        print('Average WCET(C): ' + str(AverageWCET))
+        print('WCET_Varies(e): ' + str(WCET_Varies))
+        print('-----------Extra Message------------')
+        print('TotalConditionBranch:',TotalConditionBranch)
+        print('========Debug Message End=========')
     # 输出--文件
     file=open(root+'FeatureOfPCFG.txt','w')
     try:
@@ -314,6 +320,7 @@ def printFeatureOfGraph(graph):
         file.write('\nAverageConditionalBranch(N_br): '+str(AverageConditionBranch))
         file.write('\nAverage WCET(C): '+str(AverageWCET))
         file.write('\nWCET_Varies(e): '+str(WCET_Varies))
+        file.write('\nTotalConditionBranch:'+str(TotalConditionBranch))
     except:
         print('I/O Error.')
     finally:
@@ -325,24 +332,58 @@ def pdfPrint(Path):
     os.system('dot -Tpdf '+Path+' -o '+os.path.dirname(Path)+'/FinalOutput.pdf')
 
 
+def calcBranch(graph):
+    global TotalConditionBranch
+
+    result=nx.weakly_connected_component_subgraphs(graph)
+    for gh in result:
+        # 对于每一个子图，先得到entry结点
+        entryNode=''
+        for node in gh.node:
+            if node.endswith('_entry'):
+                entryNode=node
+                break
+        numset = set()
+        # 从起点一个一个尝试 simple path
+        for node in gh.node:
+            pathGen=nx.all_simple_paths(gh,entryNode,node)
+            count=0
+            for path in pathGen:
+                count=count+1
+            if count!=0:
+                numset.add(count)
+        print("Debug: "+entryNode.replace('_entry',' numset:'),max(numset))
+        if max(numset)>1:
+            # >1 表示有条件分支
+            TotalConditionBranch=TotalConditionBranch+max(numset)
+
 if __name__=='__main__':
+    print("处理Relation表...")
     relation = parseRelation(relationPath)
     # 预处理
+    print("预处理CFG...")
     preprocess(dotPath)
+    # ================计算 AverageConditionBranch,先算出总分支数，之后除以N_we========
+    print("计算总分支数...")
+    ori_graph = nx.nx_pydot.read_dot(dotPath+'_pd')
+    calcBranch(ori_graph)
     # 得到cluster定义
+    print("获取图的Cluster__定义...")
     Definition=open(dotPath+'_dec').read()
     # 调用networkx处理CFG
+    print("处理CFG图...")
     graph = nx.nx_pydot.read_dot(dotPath+'_pd')#'Preprocessing/knapsack_ompi_trim.Preprocessing')
     parse(parseFunction,graph,relation)
     write_dot(graph,dotOutput)
     #加入定义
+    print("加入图的Cluster__定义...")
     fileContext=open(dotOutput,'r').readlines()
     FinalOutput=open(dotOutput+'_Final','w')
-
     for line in fileContext[:-1]:
         FinalOutput.write(line)
+    print("生成最终Dot图...")
     FinalOutput.write(Definition)
     FinalOutput.close()
-
+    print("生成最终PDF...")
     # 调用系统 graphviz生成最终的dot
     pdfPrint(dotOutput+'_Final')
