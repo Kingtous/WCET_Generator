@@ -9,13 +9,13 @@ from PreprocessDot import preprocess
 #设置工作目录
 root='/Users/kingtous/github/Bots_OpenMP_Tasks/concom/PCFG/'
 #=======DOT存放位置===============
-dotPath=root+'floorplan_sweet.dot'
+dotPath=root+'concom_sweet.dot'
 #=======relation.txt存放位置======
 relationPath=root+'relation.txt'
 #=======需要处理的函数入口（暂时不用）======
 parseFunction='_thrFunc0_'
 #=======WCET目录====================
-wctPath=root+'floorplan.wct'
+wctPath=root+'concom.wct'
 #===========cluster_定义==========
 Definition=''
 #========输出================================
@@ -41,8 +41,8 @@ WCET_Total=0
 
 def NodeWait(graph):
     # 这里手动写...
-    # graph.add_edge('_taskFunc0__exit', 'add_cell__bb35', color='green')
-    # graph.add_edge('_taskFunc1__exit', 'fib__bb7__2', color='green')
+    # graph.add_edge('_taskFunc0__exit', 'CC_par__bb52', color='green')
+    # graph.add_edge('_taskFunc1__exit', '_taskFunc2___bb23__1', color='green')
     # graph.add_edge('_taskFunc0__exit', 'sim_village_par__bb16__6', color='green')
 
 
