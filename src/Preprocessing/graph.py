@@ -7,15 +7,15 @@ from PreprocessDot import preprocess
 #=========================
 
 #设置工作目录
-root='/Users/kingtous/PycharmProjects/dot/src/Preprocessing/dot/thrFunc0/'
+root='/Users/kingtous/github/Bots_OpenMP_Tasks/concom/PCFG/'
 #=======DOT存放位置===============
-dotPath=root+'_thrFunc0_CFG.dot'
+dotPath=root+'floorplan_sweet.dot'
 #=======relation.txt存放位置======
-relationPath=root+'_thrFunc0_relation.txt'
+relationPath=root+'relation.txt'
 #=======需要处理的函数入口（暂时不用）======
 parseFunction='_thrFunc0_'
 #=======WCET目录====================
-wctPath=root+'knapsack.wct'
+wctPath=root+'floorplan.wct'
 #===========cluster_定义==========
 Definition=''
 #========输出================================
@@ -41,7 +41,19 @@ WCET_Total=0
 
 def NodeWait(graph):
     # 这里手动写...
+    # graph.add_edge('_taskFunc0__exit', 'add_cell__bb35', color='green')
+    # graph.add_edge('_taskFunc1__exit', 'fib__bb7__2', color='green')
+    # graph.add_edge('_taskFunc0__exit', 'sim_village_par__bb16__6', color='green')
+
+
     pass
+
+    # # 从串行角度看
+    # for node in nx.nodes(graph):
+    #     if graph.node[node]['label'].endswith('taskwait'):
+    #         # 遇到taskwait结点
+    #
+    #         pass
 
 def parseRelation(Path):
     '''
@@ -66,29 +78,32 @@ def changeShapeOfCondition(graph):
     :return: None （处理后的带有判断的CFG图）
     '''
     for node in nx.nodes(graph):
-
-        if 'CREATE' in graph.node[node]['label'] :
-            # 顺带计算 Task Creation (Call_TaskFunc)
-            global Call_TaskFunc
-            Call_TaskFunc=Call_TaskFunc+1
-            continue
-        elif 'taskwait' in graph.node[node]['label']:
-            global Wait_Vertex
-            Wait_Vertex=Wait_Vertex+1
-            continue
-        count=0
-        # 结点连接的结点
-        neighbour=nx.neighbors(graph,node)
-        for n in neighbour:
-            #判断是否是task创建
-            if 'CREATE' in n:
+        try:
+            if 'CREATE' in graph.node[node]['label'] :
+                # 顺带计算 Task Creation (Call_TaskFunc)
+                global Call_TaskFunc
+                Call_TaskFunc=Call_TaskFunc+1
                 continue
-            else:
-                count=count+1
-        if count>1:
-            graph.node[node]['shape']='diamond'
-            global ConditionVertex
-            ConditionVertex=ConditionVertex+1
+            elif 'taskwait' in graph.node[node]['label']:
+                global Wait_Vertex
+                Wait_Vertex=Wait_Vertex+1
+                continue
+            count=0
+            # 结点连接的结点
+            neighbour=nx.neighbors(graph,node)
+            for n in neighbour:
+                #判断是否是task创建
+                if 'CREATE' in n:
+                    continue
+                else:
+                    count=count+1
+            if count>1:
+                graph.node[node]['shape']='diamond'
+                global ConditionVertex
+                ConditionVertex=ConditionVertex+1
+        except:
+            print('Warning: ' + node + ' ERROR in Function:' + 'changeShapeOfCondition')
+            continue
 
 def deleteTaskReturnNode(graph):
     '''
@@ -192,38 +207,42 @@ def parrallel(graph):
     '''
     #改并行
     for node in nx.nodes(graph):
-        name= graph.node[node]['label']
-        if 'CREATE' in name:
-            for ne in nx.all_neighbors(graph,node):
-                if ne.endswith('exit'):
-                    # task 并行
-                    # node(entry) -> ne(起点)
-                    # tmp = taskFuncXX_exit
-                    tmp=ne
-                    nameToBeFind='CREATE '+ne.replace('_exit','')
-                    for nodeName in nx.nodes(graph):
-                        if(graph.node[nodeName]['label'].split('\n')[-1]==nameToBeFind):
-                            ne=nodeName
-                            break
-                    taiList=[]
+        try:
+            name= graph.node[node]['label']
+            if 'CREATE' in name:
+                for ne in nx.all_neighbors(graph,node):
+                    if ne.endswith('exit'):
+                        # task 并行
+                        # node(entry) -> ne(起点)
+                        # tmp = taskFuncXX_exit
+                        tmp=ne
+                        nameToBeFind='CREATE '+ne.replace('_exit','')
+                        for nodeName in nx.nodes(graph):
+                            if(graph.node[nodeName]['label'].split('\n')[-1]==nameToBeFind):
+                                ne=nodeName
+                                break
+                        taiList=[]
 
-                    for mother in nx.neighbors(graph,ne):
-                        taiList.append(mother)
+                        for mother in nx.neighbors(graph,ne):
+                            taiList.append(mother)
 
-                    edgeToBeAdd=[]
-                    edgeToBeDelete=[]
+                        edgeToBeAdd=[]
+                        edgeToBeDelete=[]
 
-                    for mother in nx.all_neighbors(graph,ne):
-                        if mother not in taiList:
-                            # graph.add_edge(mother,node)
-                            edgeToBeAdd.append(mother)
-                            # graph.remove_edge(tmp,node)
-                            edgeToBeDelete.append(node)
+                        for mother in nx.all_neighbors(graph,ne):
+                            if mother not in taiList:
+                                # graph.add_edge(mother,node)
+                                edgeToBeAdd.append(mother)
+                                # graph.remove_edge(tmp,node)
+                                edgeToBeDelete.append(node)
 
-                    for edge in edgeToBeAdd:
-                        graph.add_edge(edge, node)
-                    for edge in edgeToBeDelete:
-                        graph.remove_edge(tmp,edge)
+                        for edge in edgeToBeAdd:
+                            graph.add_edge(edge, node)
+                        for edge in edgeToBeDelete:
+                            graph.remove_edge(tmp,edge)
+        except:
+            print('Warning: '+node+' ERROR in Function:'+'parrallel')
+            continue
 
 def deleteUndependNode(graph):
     NodetoBeDelete=[]
@@ -272,15 +291,19 @@ def parse(parseFunction,graph,relationDict):
 
         Function_entry=relationDict[callBlock]+'_entry'
         Function_exit=relationDict[callBlock]+'_exit'
-        nextNode=None
 
-        for nod in nx.neighbors(graph,callBlock):
-            nextNode=nod
-        if not relationDict[callBlock].startswith('_taskFunc'):
-            graph.add_edge(Function_exit,nextNode,color='red')
-            # 删去不必要的边
-            graph.remove_edge(callBlock, nextNode)
-        graph.add_edge(callBlock, Function_entry,color='blue')
+        # 判断是否存在当前结点，因为要考虑调用Library的情况
+        if graph.has_node(Function_entry) or graph.has_node(Function_exit):
+
+            nextNode=None
+
+            for nod in nx.neighbors(graph,callBlock):
+                nextNode=nod
+            if not relationDict[callBlock].startswith('_taskFunc'):
+                graph.add_edge(Function_exit,nextNode,color='red')
+                # 删去不必要的边
+                graph.remove_edge(callBlock, nextNode)
+            graph.add_edge(callBlock, Function_entry,color='blue')
 
     # 处理 CFG
     deleteTaskReturnNode(graph)
