@@ -7,15 +7,15 @@ from PreprocessDot import preprocess
 #=========================
 
 #设置工作目录
-root='/Users/kingtous/github/Bots_OpenMP_Tasks/concom/PCFG/'
+root='/home/rtco/Desktop/Bots_OpenMP_Tasks/sparselu/sparselu_single/PCFG/'
 #=======DOT存放位置===============
-dotPath=root+'concom_sweet.dot'
+dotPath=root+'sparselu.dot'
 #=======relation.txt存放位置======
 relationPath=root+'relation.txt'
 #=======需要处理的函数入口（暂时不用）======
 parseFunction='_thrFunc0_'
 #=======WCET目录====================
-wctPath=root+'concom.wct'
+wctPath=root+'sparselu.wct'
 #===========cluster_定义==========
 Definition=''
 #========输出================================
@@ -44,16 +44,10 @@ def NodeWait(graph):
     # graph.add_edge('_taskFunc0__exit', 'CC_par__bb52', color='green')
     # graph.add_edge('_taskFunc1__exit', '_taskFunc2___bb23__1', color='green')
     # graph.add_edge('_taskFunc0__exit', 'sim_village_par__bb16__6', color='green')
-
+    
 
     pass
 
-    # # 从串行角度看
-    # for node in nx.nodes(graph):
-    #     if graph.node[node]['label'].endswith('taskwait'):
-    #         # 遇到taskwait结点
-    #
-    #         pass
 
 def parseRelation(Path):
     '''
@@ -355,9 +349,25 @@ def pdfPrint(Path):
     os.system('dot -Tpdf '+Path+' -o '+os.path.dirname(Path)+'/FinalOutput.pdf')
 
 
-def calcBranch(graph):
+def calcTotalBranch(graph):
     global TotalConditionBranch
 
+    for node in graph.node:
+        try:
+            # 直接判断菱形形状
+            if graph.node[node]['shape']=='diamond':
+                count=0
+                for n in nx.neighbors(graph,node):
+                    count=count+1
+                TotalConditionBranch=TotalConditionBranch+count
+            else:
+                continue
+        except:
+            continue
+
+def calcBranch(graph):
+    global TotalConditionBranch
+    # 计算每个函数的 branch 数量
     result=nx.weakly_connected_component_subgraphs(graph)
     for gh in result:
         # 对于每一个子图，先得到entry结点
@@ -386,10 +396,6 @@ if __name__=='__main__':
     # 预处理
     print("预处理CFG...")
     preprocess(dotPath)
-    # ================计算 AverageConditionBranch,先算出总分支数，之后除以N_we========
-    print("计算总分支数...")
-    ori_graph = nx.nx_pydot.read_dot(dotPath+'_pd')
-    calcBranch(ori_graph)
     # 得到cluster定义
     print("获取图的Cluster__定义...")
     Definition=open(dotPath+'_dec').read()
@@ -404,6 +410,9 @@ if __name__=='__main__':
     FinalOutput=open(dotOutput+'_Final','w')
     for line in fileContext[:-1]:
         FinalOutput.write(line)
+    # ================计算 AverageConditionBranch,先算出总分支数，之后除以N_we========
+    print("计算总分支数...")
+    calcTotalBranch(graph)
     print("生成最终Dot图...")
     FinalOutput.write(Definition)
     FinalOutput.close()
