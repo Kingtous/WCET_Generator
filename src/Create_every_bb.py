@@ -99,9 +99,18 @@ def Create_every_bb (dic,dicti,li,WCETList,filesname,outname):
                     if not folder:
                         os.makedirs(path)
                     # f = open('Generate_file/'+'Circle_'+bb+'.txt', 'w')
+
                     GenerateFileName=outname+FuncLabel+'/'+bb+'.alf'
 
-  
+                a = getfunc_name.find('::')
+                b = 0
+                for i in range(a + 1, len(getfunc_name)):
+                    if getfunc_name[i] == '"':
+                        b = i
+                        break
+                returnbb = getfunc_name[a+2:b]
+                c=returnbb.find("::")
+                returnbb= returnbb[:c]+'_'+returnbb[c+2:]
                 f = open(GenerateFileName, 'w')
                 for i in range(0,len(li)):
                     #print(i)
@@ -140,7 +149,7 @@ def Create_every_bb (dic,dicti,li,WCETList,filesname,outname):
                 for i in range(0,5):
                     f.write(' }\n')
                 f.close()
-                WCET_Generator(FuncLabel, bb, GenerateFileName, WCETList)
+                WCET_Generator(FuncLabel, returnbb, GenerateFileName, WCETList)
         else:
             #Only have return statement
             if sysstr == "Linux":
@@ -161,11 +170,17 @@ def Create_every_bb (dic,dicti,li,WCETList,filesname,outname):
                         break
                 path = outname + FuncLabel
                 folder = os.path.exists(path)
-            if not folder:
-                os.makedirs(path)
+                if not folder:
+                    os.makedirs(path)
+                GenerateFileName = outname + FuncLabel + '/' + bb + '.alf'
             # f = open('Generate_file/'+'Circle_'+bb+'.txt', 'w')
-
-            GenerateFileName=outname+FuncLabel+'/'+bb+'.alf'
+            a=getfunc_name.find('::')
+            b=0
+            for i in range(a+1,len(getfunc_name)):
+                if getfunc_name[i]=='"':
+                    b=i
+                    break
+            returnbb = getfunc_name[a+2:b]
             f = open(GenerateFileName, 'w')
             for i in range(0,len(li)):
                 #print(i)
@@ -187,7 +202,8 @@ def Create_every_bb (dic,dicti,li,WCETList,filesname,outname):
                     f.write(' ')
                 f.write('}\n')
             f.close()
-            WCET_Generator(FuncLabel,bb,GenerateFileName,WCETList)
+
+            WCET_Generator(FuncLabel,returnbb,GenerateFileName,WCETList)
             # os.remove(GenerateFileName)
             # shutil.rmtree(path)
     funcname=findlabel(dic['return'])
