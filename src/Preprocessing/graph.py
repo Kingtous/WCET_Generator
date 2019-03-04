@@ -7,20 +7,20 @@ from PreprocessDot import preprocess
 #=========================
 
 #设置工作目录
-root='/home/rtco/Desktop/Bots_OpenMP_Tasks/sparselu/sparselu_single/PCFG/'
+root='/Users/kingtous/github/Bots_OpenMP_Tasks/uts/PCFG/'
 #=======DOT存放位置===============
-dotPath=root+'sparselu.dot'
+dotPath=root+'uts_sweet.dot'
 #=======relation.txt存放位置======
 relationPath=root+'relation.txt'
 #=======需要处理的函数入口（暂时不用）======
 parseFunction='_thrFunc0_'
 #=======WCET目录====================
-wctPath=root+'sparselu.wct'
+wctPath=root+'uts.wct'
 #===========cluster_定义==========
 Definition=''
 #========输出================================
 #=======dot输出==========
-dotOutput=root+'thrFunc0_pro.dot'
+dotOutput=root+'uts_pro.dot'
 #=======特征输出==========
 Edges=0
 Nodes=0
@@ -40,14 +40,10 @@ WCET_Total=0
 
 
 def NodeWait(graph):
-    # 这里手动写...
-    # graph.add_edge('_taskFunc0__exit', 'CC_par__bb52', color='green')
-    # graph.add_edge('_taskFunc1__exit', '_taskFunc2___bb23__1', color='green')
-    # graph.add_edge('_taskFunc0__exit', 'sim_village_par__bb16__6', color='green')
-    
+    # graph.add_edge('_taskFunc0__exit','_thrFunc0___bb14',color='green')
+    # graph.add_edge('_taskFunc1__exit','parTreeSearch__bb53',color='green')
 
     pass
-
 
 def parseRelation(Path):
     '''
@@ -82,15 +78,14 @@ def changeShapeOfCondition(graph):
                 global Wait_Vertex
                 Wait_Vertex=Wait_Vertex+1
                 continue
+            elif node.endswith('_exit') or node.endswith('_entry'):
+                continue
             count=0
             # 结点连接的结点
             neighbour=nx.neighbors(graph,node)
             for n in neighbour:
                 #判断是否是task创建
-                if 'CREATE' in n:
-                    continue
-                else:
-                    count=count+1
+                count=count+1
             if count>1:
                 graph.node[node]['shape']='diamond'
                 global ConditionVertex
@@ -305,6 +300,7 @@ def parse(parseFunction,graph,relationDict):
     NodeWait(graph)
     parrallel(graph)
     deleteUndependNode(graph)
+    calcTotalBranch(graph)
     AddWCETValue(graph)
     # 输出
     printFeatureOfGraph(graph)
@@ -334,7 +330,7 @@ def printFeatureOfGraph(graph):
         file.write('\nCall_TaskFunc(N_ce): '+str(Call_TaskFunc))
         file.write('\nWait Vertex(N_we): '+str(Wait_Vertex))
         file.write('\nCondition Vertex(N_cd): '+str(ConditionVertex))
-        file.write('\nAverageConditionalBranch(N_br): '+str(AverageConditionBranch))
+        file.write('\nAverageConditionalBranch(N_br): TotalConditionalBranch/(N_if+N_loop)')
         file.write('\nAverage WCET(C): '+str(AverageWCET))
         file.write('\nWCET_Varies(e): '+str(WCET_Varies))
         file.write('\nTotalConditionBranch:'+str(TotalConditionBranch))
@@ -360,6 +356,8 @@ def calcTotalBranch(graph):
                 for n in nx.neighbors(graph,node):
                     count=count+1
                 TotalConditionBranch=TotalConditionBranch+count
+                if DEBUG:
+                    print(node,graph.node[node]['shape'],count)
             else:
                 continue
         except:
@@ -401,18 +399,15 @@ if __name__=='__main__':
     Definition=open(dotPath+'_dec').read()
     # 调用networkx处理CFG
     print("处理CFG图...")
-    graph = nx.nx_pydot.read_dot(dotPath+'_pd')#'Preprocessing/knapsack_ompi_trim.Preprocessing')
+    graph = nx.nx_pydot.read_dot(dotPath+'_pd')
     parse(parseFunction,graph,relation)
     write_dot(graph,dotOutput)
-    #加入定义
+    # 加入定义
     print("加入图的Cluster__定义...")
     fileContext=open(dotOutput,'r').readlines()
     FinalOutput=open(dotOutput+'_Final','w')
     for line in fileContext[:-1]:
         FinalOutput.write(line)
-    # ================计算 AverageConditionBranch,先算出总分支数，之后除以N_we========
-    print("计算总分支数...")
-    calcTotalBranch(graph)
     print("生成最终Dot图...")
     FinalOutput.write(Definition)
     FinalOutput.close()
