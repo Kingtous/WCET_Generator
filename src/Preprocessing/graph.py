@@ -7,20 +7,20 @@ from PreprocessDot import preprocess
 #=========================
 
 #设置工作目录
-root='/Users/kingtous/github/Bots_OpenMP_Tasks/uts/PCFG/'
+root='/home/rtco/Desktop/Bots_OpenMP_Tasks/sort/PCFG/'
 #=======DOT存放位置===============
-dotPath=root+'uts_sweet.dot'
+dotPath=root+'sort_sweet.dot'
 #=======relation.txt存放位置======
 relationPath=root+'relation.txt'
 #=======需要处理的函数入口（暂时不用）======
 parseFunction='_thrFunc0_'
 #=======WCET目录====================
-wctPath=root+'uts.wct'
+wctPath=root+'sort.wct'
 #===========cluster_定义==========
 Definition=''
 #========输出================================
 #=======dot输出==========
-dotOutput=root+'uts_pro.dot'
+dotOutput=root+'sort_pro.dot'
 #=======特征输出==========
 Edges=0
 Nodes=0
@@ -32,7 +32,7 @@ WCET_Varies=0
 Wait_Vertex=0
 #========辅助计算数据
 TotalConditionBranch=0
-DEBUG=True
+DEBUG=False
 #===========WCET Config=========
 Program_RUN=33
 WCET_Total=0
@@ -40,10 +40,20 @@ WCET_Total=0
 
 
 def NodeWait(graph):
-    # graph.add_edge('_taskFunc0__exit','_thrFunc0___bb14',color='green')
-    # graph.add_edge('_taskFunc1__exit','parTreeSearch__bb53',color='green')
+    graph.add_edge('_taskFunc8__exit','_thrFunc0___bb6',color='green')
+    graph.add_edge('_taskFunc2__exit', 'cilksort_par__bb16__32', color='green')
+    graph.add_edge('_taskFunc3__exit', 'cilksort_par__bb16__32', color='green')
+    graph.add_edge('_taskFunc4__exit', 'cilksort_par__bb16__32', color='green')
+    graph.add_edge('_taskFunc5__exit', 'cilksort_par__bb16__32', color='green')
+    graph.add_edge('_taskFunc6__exit', 'cilksort_par__bb16__35', color='green')
+    graph.add_edge('_taskFunc7__exit', 'cilksort_par__bb16__35', color='green')
+    graph.add_edge('_taskFunc0__exit', 'cilkmerge_par__bb59__40', color='green')
+    graph.add_edge('_taskFunc1__exit', 'cilkmerge_par__bb59__40', color='green')
 
-    pass
+
+
+
+
 
 def parseRelation(Path):
     '''
@@ -160,16 +170,17 @@ def AddWCETValue(graph):
                     value=line[2]
                     try:
                         wctLine=str(int(value)-Program_RUN)
-                        WCET_Varies_Dict[wctLine]= WCET_Varies_Dict.get(wctLine,0)+1
                     except:
                         wctLine='ERROR'
 
                     if graph.node[name] != None:
                         # 加Nodes
                         global Nodes,WCET_Total
+                        
                         Nodes=Nodes+1
                         if wctLine!='ERROR':
                             WCET_Total=WCET_Total+int(wctLine)
+                            WCET_Varies_Dict[wctLine]= WCET_Varies_Dict.get(wctLine,0)+1
                         graph.node[name]['label']=\
                         graph.node[name]['label']+'\n'+\
                             'WCET='+wctLine
@@ -182,6 +193,9 @@ def AddWCETValue(graph):
 
                 except:
                     continue
+        if DEBUG:
+            print('WCET Dict=',end='')
+            print(WCET_Varies_Dict)
 
     except:
         print('WCET FILE ERROR')
@@ -321,6 +335,7 @@ def printFeatureOfGraph(graph):
         print('WCET_Varies(e): ' + str(WCET_Varies))
         print('-----------Extra Message------------')
         print('TotalConditionBranch:',TotalConditionBranch)
+        print('WCET_Total',WCET_Total)
         print('========Debug Message End=========')
     # 输出--文件
     file=open(root+'FeatureOfPCFG.txt','w')
@@ -334,6 +349,7 @@ def printFeatureOfGraph(graph):
         file.write('\nAverage WCET(C): '+str(AverageWCET))
         file.write('\nWCET_Varies(e): '+str(WCET_Varies))
         file.write('\nTotalConditionBranch:'+str(TotalConditionBranch))
+        file.write('\nWCET_Total:'+str(WCET_Total))
     except:
         print('I/O Error.')
     finally:
