@@ -101,7 +101,7 @@ def Create_every_bb (dic,dicti,li,WCETList,filesname,outname):
                     # f = open('Generate_file/'+'Circle_'+bb+'.txt', 'w')
                     GenerateFileName=outname+FuncLabel+'/'+bb+'.alf'
 
-
+  
                 f = open(GenerateFileName, 'w')
                 for i in range(0,len(li)):
                     #print(i)
