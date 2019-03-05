@@ -13,7 +13,7 @@ def Create_every_bb (dic,dicti,li,WCETList,filesname,outname):
     for bb in dic:
         if len(dic)!=1:
             if bb!='return':
-                if sysstr=="Linux":
+                if sysstr=="Linux"or sysstr == "Darwin":
                     getfunc_name = dic[bb]
                     FuncLabel = findlabel(getfunc_name)
                     path = outname + FuncLabel
@@ -78,7 +78,7 @@ def Create_every_bb (dic,dicti,li,WCETList,filesname,outname):
                 # os.removedirs(path)
                 # shutil.rmtree(path)
             else:
-                if sysstr=="Linux":
+                if sysstr=="Linux" or sysstr == "Darwin":
                     getfunc_name = dic[bb]
                     FuncLabel = findlabel(getfunc_name)
                     path = outname + FuncLabel
@@ -109,8 +109,11 @@ def Create_every_bb (dic,dicti,li,WCETList,filesname,outname):
                         b = i
                         break
                 returnbb = getfunc_name[a+2:b]
-                c=returnbb.find("::")
-                returnbb= returnbb[:c]+'_'+returnbb[c+2:]
+                for s in range(0,len(returnbb)-1):
+                    if returnbb[s]==":":
+                        returnbb= returnbb[:s]+'_'+returnbb[s+2:]
+                # else:
+                #     returnbb = returnbb
                 f = open(GenerateFileName, 'w')
                 for i in range(0,len(li)):
                     #print(i)
@@ -152,7 +155,7 @@ def Create_every_bb (dic,dicti,li,WCETList,filesname,outname):
                 WCET_Generator(FuncLabel, returnbb, GenerateFileName, WCETList)
         else:
             #Only have return statement
-            if sysstr == "Linux":
+            if sysstr == "Linux" or sysstr == "Darwin":
                 getfunc_name = dic[bb]
                 FuncLabel = findlabel(getfunc_name)
                 path = outname + FuncLabel
