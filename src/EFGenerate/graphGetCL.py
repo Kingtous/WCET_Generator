@@ -12,7 +12,7 @@ from PreprocessDot import preprocess
 # =========================
 
 # 设置工作目录
-root = '/Users/kingtous/test/sort/PCFG/'
+root = '/home/rtco/Desktop/Bots_OpenMP_Tasks/sort/PCFG/'
 # =======DOT存放位置===============
 dotPath = root + 'sort_sweet.dot'
 # =======relation.txt存放位置======
@@ -511,6 +511,7 @@ if __name__ == '__main__':
     getExit(IsolatedGraph)
     print('获取block嵌套关系')
     getBlockRelation()
+    pass
     # 加入定义
     # print("加入图的Cluster__定义...")
     # fileContext = open(dotOutput, 'r').readlines()

@@ -45,7 +45,7 @@ class startPointModel:
 
 
     def isInclude(self, model):
-        if self.v.issubset(model.v):
+        if self.v.issuperset(model.v):
             return True
         return False
 
@@ -58,7 +58,6 @@ class startPointModel:
             oriModel.v = oriModel.v - model.v
         #考虑结束结点相同的情况
         oriModel.includes.add(model.start)
-        oriModel.v.add(oriModel.end)
 
 def getBB(nodeName):
     import re as r
@@ -88,14 +87,25 @@ def getValue(nodeName):
 
         if len(result) == 2:
             if result[1].startswith('__'):
-                return float('0.'+result[1].split('__')[1])
+                # __bb__1___3
+                result2=r.split('[_]+',result[1][2:])
+                if len(result2)==1:
+                    return float('0.'+result2[0])
+                elif len(result2)==2:
+                    return float('0.' + result2[0]+result2[1])
             elif result[1]=='':
                 return 0
             else:
-                return float(result[1].replace('__','.'))
-
+                result2=r.split('[_]+',result[1])
+                if len(result2)==1:
+                    return float(result2[0])
+                elif len(result2)==2:
+                    return float(result2[0]+'.'+result2[1])
+                elif len(result2)==3:
+                    return float(result2[0]+'.'+result2[1]+result2[2])
 
 def getFunctionName(name):
     import re as r
     result = r.split('__bb', name)
     return result[0]
+
