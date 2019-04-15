@@ -56,6 +56,7 @@ function_set = set()
 格式：{结点起点：结点终点}
 '''
 startPoint=[]
+start_point_model={}
 pointInfo={}
 #===========
 
@@ -438,7 +439,13 @@ def getNodeExit(graph,point):
                     nodeInQueued.append(succ)
             else:
                 if len(pointInfo[succ].sign.union(pointInfo[node].sign))>1:
+                    # 相遇的结点的bb与point的相同，则清空queue,break，为循环
+                    if getBB(succ)==getBB(point):
+                        while not nodeQueue.empty():
+                            nodeQueue.get()
+                        break
                     clearSign(point,nodeInQueued)
+                    start_point_model[point]=startPointModel(graph,point,succ,'Cond')
                     return succ,'Cond'
 
     sign_set=list(pointInfo[point].sign)
@@ -446,6 +453,7 @@ def getNodeExit(graph,point):
     for item in graph.successors(point):
         if (point,item) not in sign_set:
             clearSign(point, nodeInQueued)
+            start_point_model[point] = startPointModel(graph, point, item, 'Loop')
             return item,'Loop'
 
 def clearSign(point,nodeInQueued):
@@ -463,8 +471,22 @@ def getExit(graph):
     for point in startPoint:
         pointInfo[point].isExit,pointInfo[point].type=getNodeExit(graph,point)
     # # point='insertion_sort__bb4__3' (4615468136)
-    # getNodeExit(graph,'insertion_sort__bb4__3')
+    # getNodeExit(graph,'seqpart__bb9__5')
 
+
+def getBlockRelation():
+    # 利用pointInfo和startpoint进行获取
+    items=list(start_point_model.items())
+    for j in range(len(items)):
+        for k in range(len(items)):
+            model1=start_point_model[items[j][0]]
+            model2=start_point_model[items[k][0]]
+            if (j==k):
+                continue
+            if(model1.function!=model2.function):
+                continue
+            if(model1.isInclude(model2)):
+                model1.include(model1,model2)
 
 
 def delFile(filePath):
@@ -487,8 +509,8 @@ if __name__ == '__main__':
     parse(parseFunction, IsolatedGraph, relation)
     print("获取Loop,Condition出点...")
     getExit(IsolatedGraph)
-    print('抽取结束')
-    print(pointInfo)
+    print('获取block嵌套关系')
+    getBlockRelation()
     # 加入定义
     # print("加入图的Cluster__定义...")
     # fileContext = open(dotOutput, 'r').readlines()
