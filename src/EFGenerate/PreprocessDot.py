@@ -1,6 +1,7 @@
 import re as r
-import copy
 
+
+bound_regex = r'[^:]+:[\d]+'
 NodeReg=r'".*?"\s*\[.*?\]'
 NodeReg_Label=r'label=".*?"'
 NodeReg_Head=r'^".*?"'

@@ -25,12 +25,12 @@ class startPointModel:
         self.endValue = None
         self.getFunctionNameAndValue()
         self.findV(graph)
+        self.parent=False
+        self.CondBranch=None
 
     def getFunctionNameAndValue(self):
-        import re as r
         if self.start != None:
-            result = r.split('[_]{2,}', self.start)
-            self.function = result[0]
+            self.function=getFunctionName(self.start)
             self.startValue=getValue(self.start)
         if self.end != None:
             self.endValue=getValue(self.end)
@@ -40,24 +40,31 @@ class startPointModel:
             if getFunctionName(node)!= self.function:
                 continue
             value=getValue(node)
-            if value>self.startValue and value<self.endValue:
+            if value>=float(self.startValue) and value<self.endValue:
                 self.v.add(node)
 
+    def hasParent(self):
+        return self.parent
 
     def isInclude(self, model):
         if self.v.issuperset(model.v):
             return True
         return False
 
-    def include(self, oriModel, model):
+    def include(self, totalModel,oriModel, model):
         if oriModel.v.isdisjoint(model.v):
             # 那就在其中的include列表中
             for ori in oriModel.includes:
-                oriModel.include(ori, model)
+                oriModel.include(totalModel,totalModel[ori], model)
         else:
             oriModel.v = oriModel.v - model.v
         #考虑结束结点相同的情况
         oriModel.includes.add(model.start)
+        oriModel.v.add(oriModel.start)
+        # 不放end结点，结束结点不属于当前block
+        # oriModel.v.add(oriModel.end)
+        #添加parent
+        model.parent=oriModel.start
 
 def getBB(nodeName):
     import re as r
@@ -69,9 +76,7 @@ def getBB(nodeName):
         result = r.split('__bb', nodeName)
 
         if len(result) == 2:
-            if result[1].startswith('__'):
-                return result[1].split('__')[1]
-            elif result[1] == '':
+            if result[1].startswith('__') or result[1]=='':
                 return 0
             else:
                 return result[1].split('__')[0]
@@ -90,9 +95,9 @@ def getValue(nodeName):
                 # __bb__1___3
                 result2=r.split('[_]+',result[1][2:])
                 if len(result2)==1:
-                    return float('0.'+result2[0])
+                    return float('0.'+result2[0].zfill(4))
                 elif len(result2)==2:
-                    return float('0.' + result2[0]+result2[1])
+                    return float('0.' + result2[0].zfill(4)+result2[1].zfill(4))
             elif result[1]=='':
                 return 0
             else:
@@ -100,11 +105,17 @@ def getValue(nodeName):
                 if len(result2)==1:
                     return float(result2[0])
                 elif len(result2)==2:
-                    return float(result2[0]+'.'+result2[1])
+                    return float(result2[0]+'.'+result2[1].zfill(4))
                 elif len(result2)==3:
-                    return float(result2[0]+'.'+result2[1]+result2[2])
+                    return float(result2[0]+'.'+result2[1].zfill(4)+result2[2].zfill(4))
 
 def getFunctionName(name):
+    if name.endswith('_entry') :
+        return name.replace('_entry','')
+
+    if name.endswith('_exit'):
+        return name.replace('_exit','')
+
     import re as r
     result = r.split('__bb', name)
     return result[0]
