@@ -19,7 +19,7 @@ def Create_every_bb (basicblock_sum, declaration_everyfunc, declaration_total, W
 
     '''
 
-    out_filename= '/tmp' + out_filename + '/'
+    out_filename= '/tmp/' + out_filename + '/'
     # outname =outname + '/'
     Systemtype = platform.system()            #system
     for basicblock_name in basicblock_sum:
