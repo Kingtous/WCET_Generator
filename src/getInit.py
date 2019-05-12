@@ -4,10 +4,12 @@ import re as r
 
 def getInitialHeader(string):
     '''
-    负责人：张利威
-    目的：获取引导区的内容
-    return 要求：返回一个list，每一行（除下lrefs那行）都是一个list中的元素，lrefs那行切成一个一个小的元素(按lref切，方便后序重组)
+    获取引导区的内容
+    :param string: alf文件
+    :return: 返回一个list，每一行（除下lrefs那行）都是一个list中的元素，lrefs那行切成一个一个小的元素(按lref切，方便后序重组)
     '''
+
+
     temp = [] #暂存列表列表
     result =[] #存储最终结果的列表
     d = {} #暂存有关lref元素的字典

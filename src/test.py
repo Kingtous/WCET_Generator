@@ -6,7 +6,7 @@ from getHeader1 import getHeader
 from getFunc import getFunc
 from Delete_Note import Delete_Note
 from Function_declaration import getFunction_declaration
-from Changejump import Changejump
+from replace_call import replace_call
 from getBasicBlockSlice import getBasicBlockSlice
 from Create_every_bb import Create_every_bb
 
@@ -33,7 +33,7 @@ for i in range(0,len(list_func)):
     list_func_temp.append(list_func[i])
     dict_temp=getBasicBlockSlice(list_func_temp)
     #print(dict_temp)
-    Changejump(dict_temp)
+    replace_call(dict_temp)
     #print(dict_temp)
     Create_every_bb(dict_temp,Every_func_mid_declaration,head)
 

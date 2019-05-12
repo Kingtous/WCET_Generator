@@ -1,6 +1,12 @@
 #!/usr/bin/env python
 # coding: utf-8
 def findPosFromPoint(string,startPoint):
+    '''
+    按照括号匹配的原则对代码切割
+    :param string: 代码
+    :param startPoint: 起始点
+    :return: 切割出的文本
+    '''
     FindText=''
     point=startPoint
     cnt=0

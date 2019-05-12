@@ -7,7 +7,7 @@ from getInit import getInitialHeader
 from getFunc import getFunc
 from Delete_Note import Delete_Note
 from Function_declaration import getFunction_declaration
-from Changejump import Changejump
+from replace_call import replace_call
 from getBasicBlockSlice import getBasicBlockSlice
 from Create_every_bb import Create_every_bb
 from WCET_Generator import WCET_Output
