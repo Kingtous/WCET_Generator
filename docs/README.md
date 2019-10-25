@@ -1,60 +1,80 @@
 # OmpTG-Manual
 >## Software overview 
->用于用户在线使用的OmpTG工具，分成六个部分，使得用户随时可以查看中间生成代码，便于调试。。。。。。      
->网页地址:[OmpTG WebLinks](http://omptg.kingtous.cn/)
+>* **OpenMP**:Real-time systems are shifting them from single-core to multi-core processors. Software must be parallelized to fully utilize the computation power of multi-core architectures.OpenMP is a promising framework to develop  parallel real-time software on multi-cores. OpenMP programs keep certain similarity to real-time task graph  models,and this motivates much recent work done on real-time scheduling of OpenMP tasks.**However,these studies conduct evaluations with randomly generated task graphs,which cannot well capture the structure  features of realistic OpenMP programs.** To fill the gap between theoretical real-time scheduling research and the OpenMP software reality,we develop a ompTG tool for **transforming OpenMP programs into parallel  task graphs.**   
+>* **OmpTG**:ompTG prepares a way to exhibit OpenMP such that the researchers in real-time community can  easily understand:A OpenMP system consists of a set of tasks.There are interdependencies among tasks, and each task has an intra structure of the control-flow graph.Besides the topology of OpenMP tasks,we also provide a safe WCET for each vertex of OpenMP task graphs by using static WCET analysis techniques. Moreover,we derive the flow facts,e.g,infeasible path and loop bounds  for the taskgraph,which is necessary information for real-time scheduling and analysis.    
+>* **This Documentation is for the `OmpTG Online`, where functions are divided into six parts, so that users can view the intermediate generated code at any time, which is beneficial to analyze the structure.**       
+>* **OmpTG WebLinks**:[*click here*](http://omptg.kingtous.cn/)
 *** 
 >## Features
 ### Step1.Transform OpeMP C Code To OMPI Trimmed Code  
-  * 在这一步,我们需要你提供需要分析的c语言的源程序，我们将使用***OMPI***将其转换为OMPI Trimmed格式的文件。  
-  1.点击*Step1*，进入Step1页面
-  ![点击Step1](/graph/step1.png)
-  2.点击*choose*按钮，上传一个zip文件，这里面需要包含你所分析的c语言文件源程序和其依赖项,点击*start*按钮
-  ![Step1上传](/graph/1_1.gif)
-  3.选择你的源程序入口，点击*select*按钮，等待生成XXX_ompi_trim.c文件。
+  * In this step, we need you to provide the source code of the C language that needs to be analyzed. We will use ***OMPI*** to convert it to the OMPI Trimmed mode file.  
+  1.Click on `Step1` to enter the Step1 page.  
+  ![点击Step1](/graph/step1.png)  
+  2.Click `choose` to upload a zip file containing the c language file source and its dependencies you analyzed, then click `start`.   
+  ![Step1上传](/graph/1_1.gif) 
+  3.Select your source entry, click `select`, and wait for the ‘XXX_ompi_trim.c’ file to be generated.    
   ![Step1选择入口](/graph/1_2.gif)
-  4.点击*download*下载文件。
-### Step2.Transform OMPI Trimmed Code into ALF Code  
-  * 在这一步,我们需要你提供经过OMPI处理后的c语言文件，我们使用***ALFBackend***工具将其转换成ALF文件和MAP文件。   
-  1.点击*Step2*，进入Step2页面。
-  ![点击Step2](/graph/step2.png)
-  2.点击*choose*按钮，上传一个经过OMPI处理后的c语言文件（Step1中生成的结果），点击*start*按钮。   
-  ![点击Step2](/graph/2_1.gif)
-  3.等待网页响应后，下载你所需要的ALF/MAP文件。   
-  ![点击Step2](/graph/2_2.png)
-### Step3.Generate WCET By ALF Code   
-  * 在这一步，我们需要你提供需要分析的c语言程序对应的ALF文件，我们使用***OmpTG***工具生成ALF文件对应的WCET文件（ALF文件中每一个结点的执行时间表）。    
-  1.点击*Step3*，进入Step3页面。
-  ![点击Step3](/graph/step3.png)
-  2.点击*choose*按钮，上传一个ALF文件（Step2中生成的结果），点击*Generate WCET*按钮。   
-  ![点击Step3](/graph/3_1.gif)
-  3.等待网页响应后（可能会等待一段时间），点击*download*按钮下载生成的WCET文档。
-### Step4.Generate Relation File By ALF Code      
-  * 在这一步，我们需要你提供需要分析的c语言程序对应的ALF文件，我们使用***OmpTG***工具生成ALF文件对应的Relation文件(ALF文件中每一个函数的调用关系表)
-    1.点击*Step4*，进入Step4页面。  
-    ![点击Step4](/graph/step4.png)   
-    2.点击*choose*按钮，上传一个ALF文件（Step2中生成的结果），点击*Generate Relation Files*按钮。    
-    ![点击Step4](/graph/4_1.gif)   
-    3.等待网页响应后，点击*Back to Menu/Check Files*按钮返回主页面。  
-    点击Check My Files，查看最近生成的文件，点击*relation/*文件夹，里面就是上一个ALF对应生成的每一个函数的relation文件。    
-    ![点击Step4](/graph/4_2.png)  
-    ![点击Step4](/graph/4_3.gif)
+  4.Click `download` to download the file.   
+  > PS: If Server has no response(perhaps it costs plenty of time), you could back to menu to check your files.   
+### Step2.Transform OMPI Trimmed Code into ALF Code   
+  * In this step, we need you to provide the c language file processed by OMPI (the result generated in Step1), and we convert it into ALF file and MAP file using ***ALFBackend*** tool.     
+  1.Click on `Step2` to enter the Step2 page.   
+  ![点击Step2](/graph/step2.png)   
+  2.Click `choose` to upload a c language file processed by OMPI (the result generated in Step1) and click `start`.   
+  ![点击Step2](/graph/2_1.gif)   
+  3.After waiting for the web page to respond, download the ALF/MAP file you need.    
+  ![点击Step2](/graph/2_2.png)    
+  > PS: If Server has no response(perhaps it costs plenty of time), you could back to menu to check your files.   
+### Step3.Generate WCET By ALF Code    
+  * In this step, we need you to provide the ALF file corresponding to the c language program that needs to be analyzed. We use the ***OmpTG*** tool to generate the WCET file corresponding to the ALF file (the execution schedule of each node in the ALF file).     
+  1.Click on `Step3` to enter the Step3 page.  
+  ![点击Step3](/graph/step3.png)  
+  2.Click `choose` to upload an ALF file (the result generated in Step2) and click `Generate WCET`.  
+  ![点击Step3](/graph/3_1.gif)   
+  3.After waiting for the web page to respond (may wait a long time), click `download` to download the generated WCET document.    
+  > PS: If Server has no response(perhaps it costs plenty of time), you could back to menu to check your files.    
+### Step4.Generate Relation File By ALF Code        
+  * In this step, we need you to provide the ALF file corresponding to the c language program that needs to be analyzed. We use the ***OmpTG*** tool to generate the Relation file corresponding to the ALF file (the call relationship table for each function in the ALF file).    
+    1.Click on `Step4` to enter the Step4 page.    
+    ![点击Step4](/graph/step4.png)     
+    2.Click `choose`, upload an ALF file (the result generated in Step2), and click `Generate Relation Files`.      
+    ![点击Step4](/graph/4_1.gif)    
+    3.After waiting for the web page to respond, click `Back to Menu/Check Files` to return to the main page.     
+      Click `Check My Files` to view the most recently generated file. Click on the *relation/* folder, which is the relation file for each function generated by the previous ALF.       
+    ![点击Step4](/graph/4_2.png)    
+    ![点击Step4](/graph/4_3.gif)       
+    > PS: If Server has no response(perhaps it costs plenty of time), you could back to menu to check your files.      
 ### Step5.Generate PCFG By ALF Code   
-  * 在这一步，我们需要你提供一个zip文件，这里面包括以下三个文件：  
+  * In this step, we need you to provide a zip file, which includes the following three files:    
     - a dot file generated by SWEET Tool.    
     - a WCET file generated by OmpTG.       
-    - a relation(.txt) file generated by OmpTG.   
-   我们利用三种文件生成PCFG图。  
-  1.点击*Step5*，进入Step5页面。  
-  ![点击Step5](/graph/step5.png)
-  2.   
-  ![点击Step5](/graph/5_1.gif)
-  3.    
-  
+    - a relation(.txt) file generated by OmpTG.     
+   We use three files to generate a PCFG graph.   
+  1. Click on `Step5` to enter the Step5 page.    
+  ![点击Step5](/graph/step5.png)    
+  2.Click `Select` to upload a zip file (this needs to contain three files:a dot file,a WCET file,a relation(.txt) file), then click `start`，     
+  After waiting for the page to jump, if you confirm that the identified file is correct, then click `confirm`.     
+  ![点击Step5](/graph/5_1.gif)   
+  3.After waiting for the web page to respond, click `download` to download the generated PCFG file (.pdf).
+  ![点击Step5](/graph/5_2.png)   
+  > PS: If Server has no response(perhaps it costs plenty of time), you could back to menu to check your files.    
 ### Step6.Generate EFG By ALF Code 
-  * 在这一步,   
-  1.点击*Step6*，进入Step6页面。  
-  ![点击Step6](/graph/step6.png)
-***
+  * In this step, we need you to provide a zip file, which includes the following three files:   
+      - a dot file generated by SWEET Tool.    
+      - a WCET file generated by OmpTG.       
+      - a relation(.txt) file generated by OmpTG.     
+     We use three files to generate a EFG graph.   
+  1.Click on `Step6` to enter the Step6 page.    
+  ![点击Step6](/graph/step6.png) 
+  2. Click `Select` to upload a zip file (this needs to contain three files:a dot file,a WCET file,a relation(.txt) file), then click `start`，        
+  After waiting for the page to jump, if you confirm that the identified file is correct, then click `confirm`.      
+  ![点击Step6](/graph/6_1.gif)     
+  3.After waiting for the web page to respond, click `Back to Menu/Check Files` to return to the main page.       
+  Click `Check My Files` to see the latest generated files. Click on the folder with the same name as the uploaded file and find the *EFG/* folder, which stores all the generated EFG files.           
+  ![点击Step6](/graph/6_2.png)    
+  ![点击Step6](/graph/6_3.gif)   
+  > PS: If Server has no response(perhaps it costs plenty of time), you could back to menu to check your files.    
+*** 
 
   
 
