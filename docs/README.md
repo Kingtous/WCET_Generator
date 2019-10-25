@@ -6,7 +6,7 @@
 >* **OmpTG WebLinks**:[*click here*](http://omptg.kingtous.cn/)
 *** 
 >## Features
-### Step1.Transform OpeMP C Code To OMPI Trimmed Code  
+### Step1.Convert OpeMP C Code To OMPI Trimmed Code  
   * In this step, we need you to provide the source code of the C language that needs to be analyzed. We will use ***OMPI*** to convert it to the OMPI Trimmed mode file.  
   1.Click on `Step1` to enter the Step1 page.  
   ![点击Step1](/graph/step1.png)  
@@ -16,7 +16,7 @@
   ![Step1选择入口](/graph/1_2.gif)
   4.Click `download` to download the file.   
   > PS: If Server has no response(perhaps it costs plenty of time), you could back to menu to check your files.   
-### Step2.Transform OMPI Trimmed Code into ALF Code   
+### Step2.Convert OMPI Trimmed Code into ALF Code   
   * In this step, we need you to provide the c language file processed by OMPI (the result generated in Step1), and we convert it into ALF file and MAP file using ***ALFBackend*** tool.     
   1.Click on `Step2` to enter the Step2 page.   
   ![点击Step2](/graph/step2.png)   
